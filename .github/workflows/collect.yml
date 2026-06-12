@@ -1,0 +1,47 @@
+name: collect
+on:
+  workflow_dispatch:
+    inputs:
+      token_index:
+        description: 'token index'
+        required: true
+        default: '0'
+      items_json:
+        description: 'items json'
+        required: false
+        default: ''
+      text:
+        description: 'item name'
+        required: false
+        default: ''
+      goods_id:
+        description: 'item goods_id'
+        required: false
+        default: ''
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install requests pynacl
+      - name: Run collect
+        env:
+          CSQAQ_TOKENS: ${{ secrets.CSQAQ_TOKENS }}
+        run: |
+          if [ -n "${{ inputs.items_json }}" ]; then
+            python collect.py --items-json "${{ inputs.items_json }}" --token-index "${{ inputs.token_index }}"
+          else
+            python collect.py --text "${{ inputs.text }}" --goods-id "${{ inputs.goods_id }}" --token-index "${{ inputs.token_index }}"
+          fi
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result
+          path: result.json
